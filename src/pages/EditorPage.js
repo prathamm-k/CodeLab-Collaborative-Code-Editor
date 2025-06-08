@@ -10,9 +10,10 @@ const EditorPage = () => {
   const socketRef = useRef(null);
   const codeRef = useRef(null);
   const location = useLocation();
-  const {roomId} = useParams();
+  const { roomId } = useParams();
   const reactNavigator = useNavigate();
   const [clients, setClients] = useState([]);
+
   useEffect(() => {
     const init = async () => {
       socketRef.current = await initSocket();
@@ -30,7 +31,6 @@ const EditorPage = () => {
         username: location.state?.username,
       });
 
-      // Listening for joined event
       socketRef.current.on(ACTIONS.JOINED, ({ clients, username, socketId }) => {
         if (username !== location.state?.username) {
           toast.success(`${username} joined the room.`);
@@ -40,10 +40,9 @@ const EditorPage = () => {
         socketRef.current.emit(ACTIONS.SYNC_CODE, {
           code: codeRef.current,
           socketId,
-        })
+        });
       });
 
-      // Listening for disconnected
       socketRef.current.on(ACTIONS.DISCONNECTED, ({ socketId, username }) => {
         toast.success(`${username} left the room.`);
         setClients((prev) => {
@@ -54,7 +53,7 @@ const EditorPage = () => {
       socketRef.current.on(ACTIONS.LEAVE, ({ username }) => {
         toast.success(`${username} has left the room.`);
         setClients((prev) => {
-          return prev.filter((client) => client.username !== username)
+          return prev.filter((client) => client.username !== username);
         });
       });
 
@@ -67,73 +66,65 @@ const EditorPage = () => {
     };
     init();
 
-    // Handle browser back navigation
     const handleBackNavigation = (event) => {
-      event.preventDefault(); // Prevent navigation
-      leaveRoom(); // Trigger leaveRoom logic
+      event.preventDefault();
+      leaveRoom();
     };
 
     window.addEventListener('popstate', handleBackNavigation);
 
-    // Clean up the event listener on component unmount
     return () => {
       window.removeEventListener('popstate', handleBackNavigation);
     };
-
   }, []);
 
-  async function copyRoomId(){
-    try{
+  async function copyRoomId() {
+    try {
       await navigator.clipboard.writeText(roomId);
       toast.success('Room ID copied to clipboard');
-    }catch(e){
+    } catch (e) {
       toast.error('Could not copy room ID, please try again.');
       console.error(e);
     }
   }
 
-
   const leaveRoom = () => {
     if (socketRef.current) {
-      // Emit a leave event to the server
       socketRef.current.emit(ACTIONS.LEAVE, {
         roomId,
         username: location.state?.username,
       });
-
-      // Display a toast message
       toast.success('You left the room.');
-
-      // Navigate to the home page
       reactNavigator('/');
     }
-  }
+  };
 
-  if (!location.state){
-    return <Navigate to="/" />
+  if (!location.state) {
+    return <Navigate to="/" />;
   }
 
   return (
-    <div className = 'mainWrapper'>
-      <div className = 'sideWrapper'>
-        <div className='sideInner'>
-          <div className='logo'>
-            <img className='logoImage' src ='/codelab.png' alt = 'logo'/>
+    <div className="mainWrapper">
+      <div className="sideWrapper">
+        <div className="sideInner">
+          <div className="logo">
+            <img className="logoImage" src="/codelab.png" alt="logo" />
           </div>
           <h3>Connected</h3>
-          <div className='clientsList'>
-            {clients.map((client)=>(
-              <Client
-                key = {client.socketId}
-                username={client.username}
-              />
+          <div className="clientsList">
+            {clients.map((client) => (
+              <Client key={client.socketId} username={client.username} />
             ))}
           </div>
         </div>
-        <button className='button copyButton' onClick={copyRoomId}>Copy room ID</button>
-        <button className='button leaveButton' onClick={leaveRoom}>Leave</button>
+        <button className="button copyButton" onClick={copyRoomId}>
+          Copy Room ID
+        </button>
+        <button className="button leaveButton" onClick={leaveRoom}>
+          Leave
+        </button>
       </div>
-      <div className='editorWrapper'>
+      <div className="editorWrapper">
         <Editor
           socketRef={socketRef}
           roomId={roomId}
@@ -143,7 +134,7 @@ const EditorPage = () => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default EditorPage
+export default EditorPage;

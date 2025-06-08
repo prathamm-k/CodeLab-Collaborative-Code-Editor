@@ -4,6 +4,7 @@ const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
 const ACTIONS = require('./src/Actions');
+const { exec } = require('child_process');
 
 const server = http.createServer(app);
 const io = new Server(server);
@@ -56,6 +57,17 @@ io.on('connection', (socket) => {
         socket.leave(roomId);
 
         console.log(`${username} left room ${roomId}`);
+    });
+
+    socket.on(ACTIONS.RUN_CODE, ({ roomId, code }) => {
+        // Sanitize input if necessary
+        const command = `python3 -c "${code.replace(/"/g, '\\"')}"`;
+            exec(command, (error, stdout, stderr) => {
+                const output = error ? stderr : stdout;
+                io.to(roomId).emit(ACTIONS.CODE_OUTPUT, {
+                    output,
+                });
+            });
     });
 
     socket.on('disconnecting', () => {
