@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import Client from '../components/Client';
 import Editor from '../components/Editor';
@@ -13,6 +13,21 @@ const EditorPage = () => {
   const { roomId } = useParams();
   const reactNavigator = useNavigate();
   const [clients, setClients] = useState([]);
+
+  const handleCodeChange = useCallback((code) => {
+    codeRef.current = code;
+  }, []);
+
+  const leaveRoom = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.emit(ACTIONS.LEAVE, {
+        roomId,
+        username: location.state?.username,
+      });
+      toast.success('You left the room.');
+      reactNavigator('/');
+    }
+  }, [roomId, location.state?.username, reactNavigator]);
 
   useEffect(() => {
     const init = async () => {
@@ -76,7 +91,7 @@ const EditorPage = () => {
     return () => {
       window.removeEventListener('popstate', handleBackNavigation);
     };
-  }, []);
+  }, [leaveRoom, location.state?.username, reactNavigator, roomId]);
 
   async function copyRoomId() {
     try {
@@ -87,17 +102,6 @@ const EditorPage = () => {
       console.error(e);
     }
   }
-
-  const leaveRoom = () => {
-    if (socketRef.current) {
-      socketRef.current.emit(ACTIONS.LEAVE, {
-        roomId,
-        username: location.state?.username,
-      });
-      toast.success('You left the room.');
-      reactNavigator('/');
-    }
-  };
 
   if (!location.state) {
     return <Navigate to="/" />;
@@ -128,9 +132,7 @@ const EditorPage = () => {
         <Editor
           socketRef={socketRef}
           roomId={roomId}
-          onCodeChange={(code) => {
-            codeRef.current = code;
-          }}
+          onCodeChange={handleCodeChange}
         />
       </div>
     </div>

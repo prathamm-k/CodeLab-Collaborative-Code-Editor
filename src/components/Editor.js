@@ -35,7 +35,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
         }
       });
 
-      // Add keyboard shortcut for running code
+      // Add keyboard shortcuts for running and downloading code
       editorRef.current.on('keydown', (editor, event) => {
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
           event.preventDefault();
@@ -44,28 +44,34 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
             roomId,
             code,
           });
+        } else if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+          event.preventDefault();
+          downloadCode();
         }
       });
     }
     init();
-  }, [roomId, socketRef]);
+  }, [roomId, socketRef, onCodeChange]);
 
   useEffect(() => {
-    if (socketRef.current) {
-      socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+    const socket = socketRef.current;
+    if (socket) {
+      socket.on(ACTIONS.CODE_CHANGE, ({ code }) => {
         if (code !== null) {
           editorRef.current.setValue(code);
         }
       });
-      socketRef.current.on(ACTIONS.CODE_OUTPUT, ({ output }) => {
+      socket.on(ACTIONS.CODE_OUTPUT, ({ output }) => {
         setOutput(output);
       });
     }
     return () => {
-      socketRef.current.off(ACTIONS.CODE_CHANGE);
-      socketRef.current.off(ACTIONS.CODE_OUTPUT);
+      if (socket) {
+        socket.off(ACTIONS.CODE_CHANGE);
+        socket.off(ACTIONS.CODE_OUTPUT);
+      }
     };
-  }, [socketRef.current]);
+  });
 
   const runCode = () => {
     const code = editorRef.current.getValue();
@@ -81,7 +87,7 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'codelab_script.py';
+    a.download = 'script.py';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -91,10 +97,10 @@ const Editor = ({ socketRef, roomId, onCodeChange }) => {
   return (
     <div className="editor-container">
       <div className="editor-header">
-        <button onClick={runCode} className="Button runButton" data-tooltip="Ctrl+Enter" title="Ctrl+Enter">
+        <button onClick={runCode} className="button runButton" data-tooltip="Ctrl+Enter">
           ▶ Run
         </button>
-        <button onClick={downloadCode} className="button downloadButton" title="Download Script">
+        <button onClick={downloadCode} className="button downloadButton" data-tooltip="Ctrl+S">
           ↓ Download
         </button>
       </div>
