@@ -11,8 +11,6 @@ CodeLab is a real-time collaborative code editor that enables multiple users to 
 - Collaborative coding rooms with unique IDs
 - Python syntax highlighting and code execution
 - Auto-closing brackets and tags
-- Keyboard shortcuts for running (Ctrl+Enter) and downloading (Ctrl+S) code
-- Copy room ID and leave room functionality
 - User presence indicators with avatars
 - Responsive and intuitive UI with output panel
 - Download code as `.py` files
